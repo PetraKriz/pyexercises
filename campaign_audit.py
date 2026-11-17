@@ -31,7 +31,35 @@ def read_campaigns(filename):
     return campaigns
 
 
+# ✏️ your comment
+def compute_kpis(campaigns):
+    valid = []
+    for c in campaigns:
+        # ✏️ your comment (data rule 1)
+        if c["impressions"] is None or c["impressions"] == 0:
+            print(f"Note: '{c['name']}' has no impressions and is excluded from all calculations.")
+            continue
+
+        c["ctr"] = c["clicks"] / c["impressions"]
+
+        # ✏️ your comment (data rule 2)
+        if c["conversions"]:
+            c["cpa"] = c["cost"] / c["conversions"]
+        else:
+            c["cpa"] = None
+
+        # ✏️ your comment
+        if c["cost"]:
+            c["roas"] = c["revenue"] / c["cost"]
+        else:
+            c["roas"] = None
+
+        valid.append(c)
+    return valid
+
+
 # temporary test (we'll remove it later)
 data = read_campaigns(CAMPAIGN_FILE)
-for c in data:
-    print(c)
+valid = compute_kpis(data)
+for c in valid:
+    print(c["name"], "CTR:", round(c["ctr"] * 100, 2), "% | CPA:", c["cpa"], "| ROAS:", c["roas"])
