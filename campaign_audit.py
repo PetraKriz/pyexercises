@@ -58,8 +58,42 @@ def compute_kpis(campaigns):
     return valid
 
 
+# ✏️ your comment
+def compute_answers(valid):
+    # ✏️ your comment (Q1)
+    best_ctr = max(valid, key=lambda c: c["ctr"])
+
+    # ✏️ your comment (Q2)
+    with_cpa = [c for c in valid if c["cpa"] is not None]
+    if with_cpa:
+        highest_cpa = max(with_cpa, key=lambda c: c["cpa"])["name"]
+    else:
+        highest_cpa = None
+
+    # ✏️ your comment (Q3)
+    roas_count = len([c for c in valid if c["roas"] is not None and c["roas"] > 3])
+
+    # ✏️ your comment (Q4)
+    totals = {}
+    for c in valid:
+        totals[c["channel"]] = totals.get(c["channel"], 0) + c["conversions"]
+    best_channel = max(totals, key=totals.get)
+
+    # ✏️ your comment (Q5)
+    average_ctr = sum(c["ctr"] for c in valid) / len(valid)
+
+    return {
+        "best_ctr": best_ctr["name"],
+        "highest_cpa": highest_cpa,
+        "roas_count": roas_count,
+        "best_channel": best_channel,
+        "channel_totals": totals,
+        "average_ctr": round(average_ctr * 100, 2),
+    }
+
+
 # temporary test (we'll remove it later)
 data = read_campaigns(CAMPAIGN_FILE)
 valid = compute_kpis(data)
-for c in valid:
-    print(c["name"], "CTR:", round(c["ctr"] * 100, 2), "% | CPA:", c["cpa"], "| ROAS:", c["roas"])
+answers = compute_answers(valid)
+print(answers)
