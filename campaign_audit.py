@@ -2,8 +2,11 @@
 
 import csv
 import unicodedata
+import os
+from datetime import date
 
 CAMPAIGN_FILE = "campaigns_C.csv"
+RESULT_FILE = "result.csv"
 
 
 # ✏️ your comment
@@ -175,10 +178,82 @@ def play_quiz(valid, answers):
     return score
 
 
-# temporary test (we'll remove it later)
-data = read_campaigns(CAMPAIGN_FILE)
-valid = compute_kpis(data)
-answers = compute_answers(valid)
-name = get_player_name()
-score = play_quiz(valid, answers)
-print(f"\n{name}, your final score is {score}/5")
+# ✏️ your comment
+def save_result(filename, name, score, total):
+    new_file = not os.path.exists(filename)
+    with open(filename, "a", encoding="utf-8", newline="") as file:
+        writer = csv.writer(file)
+        if new_file:
+            writer.writerow(["name", "score", "date"])
+        writer.writerow([name, f"{score}/{total}", date.today().isoformat()])
+
+
+# ✏️ your comment
+def load_results(filename):
+    if not os.path.exists(filename):
+        return []
+    with open(filename, "r", encoding="utf-8", newline="") as file:
+        return list(csv.DictReader(file))
+
+
+# ✏️ your comment
+def show_kpi_table(valid):
+    print("\nCampaign audit")
+    print(f"{'Campaign':<20}{'Channel':<14}{'CTR':>8}{'CPA':>10}{'ROAS':>8}")
+    for c in valid:
+        cpa = f"{c['cpa']:.2f}" if c["cpa"] is not None else "n/a"
+        roas = f"{c['roas']:.2f}" if c["roas"] is not None else "n/a"
+        print(f"{c['name']:<20}{c['channel']:<14}{c['ctr'] * 100:>7.2f}%{cpa:>10}{roas:>8}")
+
+
+# ✏️ your comment
+def main():
+    step = "start"
+    try:
+        step = "read_campaigns"
+        campaigns = read_campaigns(CAMPAIGN_FILE)
+        if not campaigns:
+            print(f"No campaigns found in {CAMPAIGN_FILE}.")
+            return
+
+        step = "compute_kpis"
+        valid = compute_kpis(campaigns)
+        if not valid:
+            print("No campaign can be used for the calculations.")
+            return
+
+        step = "compute_answers"
+        answers = compute_answers(valid)
+
+        print("\n=== Campaign Audit Quiz ===")
+        step = "get_player_name"
+        name = get_player_name()
+
+        step = "play_quiz"
+        score = play_quiz(valid, answers)
+        print(f"\n{name}, your final score is {score}/5")
+
+        step = "save_result"
+        save_result(RESULT_FILE, name, score, 5)
+        print(f"Your result was saved in {RESULT_FILE}.")
+
+        step = "load_results"
+        history = load_results(RESULT_FILE)
+        print("\nAll saved results:")
+        for line in history:
+            print(f"  {line['date']}  {line['name']}: {line['score']}")
+
+        show_kpi_table(valid)
+
+    except FileNotFoundError as error:
+        print(f"Error in {step}: file not found ({error.filename}).")
+    except PermissionError as error:
+        print(f"Error in {step}: no permission to use the file ({error.filename}).")
+    except (KeyboardInterrupt, EOFError):
+        print("\nGame stopped by the player. Nothing was saved.")
+    except Exception as error:
+        print(f"Unexpected error in {step}: {type(error).__name__}: {error}")
+
+
+if __name__ == "__main__":
+    main()
